@@ -43,3 +43,21 @@ DNS Administrator
 > Note: You may want to grant more finely-grained permissions rather than these general roles.
 
 #### Setup a Cloud Build Trigger
+In the console under Cloud Build > Build Triggers [here](https://console.cloud.google.com/cloud-build/triggers), create a new trigger.  
+Point the trigger to your fork of this repo.  
+> You might not need to fork, but it's recommended to be shielded from unwanted updates.  
+
+Set the Build Configuration option to `cloudbuild.yaml` and add these additional variables.
+
+> These are all required, and should be set to the names of the services and zones you created earlier.
+
+| Variable | Example Value | Description |
+| --- | --- | --- |
+| _CACHE_BUCKET | my-cert-bucket | The name of the Google Cloud Storage bucket to use for storing/retrieving the certificates between builds |
+| _EMAIL | me@example.com | The email that will be used when generating your letsencrypt certificates |
+| _DOMAIN | example.com | The plain domain name for which certificates will be generated.  The configured zone must match this.  The request will be for a certificate that's valid for example.com and *.example.com |
+| _PROXY_NAME | my-ssl-target-proxy | The name of the https proxy, by default this will be `[https-loadbalancer-name]-target-proxy` |
+
+If all works well, you should have a new certificate on your load-balancer after having run the trigger for the first time.  
+The certificates will follow the naming pattern `zone-tld-certificate-serial` where any dots in the domain are replaced with dashes.  
+Certificates will never be deleted, just removed from the load-balancer.  You can see all certificates in the console [here](https://console.cloud.google.com/net-services/loadbalancing/advanced/sslCertificates/list).
