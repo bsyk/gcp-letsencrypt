@@ -7,17 +7,18 @@ Without edits, this will try to obtain a wildcard certificate for the whole doma
 
 > Note: This script stores the generated certificates in Google Cloud Storage between runs to avoid renewing certificates too frequently.  This may pose a security risk.
 
-### Getting Started
-There are some prerequsites to using this script, asside from having a Google Cloud account.
+## Getting Started
+There are a few steps to using this script.
 
-1. An existing https load-balancer.  
+1. Create an HTTPS Load-balancer  
 You'll need a certificate pair in order to create the load-balancer. A self-signed one is fine for this purpose for now.
-1. An existing Cloud DNS zone.  
+1. Create a Cloud DNS Zone  
 This needs to be properly registered with your registar.
-1. cloudbuild IAM account needs additional permissions.  
-As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissiosn to do so.
+1. Grant `cloudbuild` IAM Role permissions  
+As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissiosn to do so.  
+1. Setup a Cloud Build Trigger
 
-#### Create an HTTPS Load-balancer
+### Create an HTTPS Load-balancer
 In the console under Network Services > Load Balancing [here](https://console.cloud.google.com/net-services/loadbalancing/loadBalancers/list), create a new HTTPS Load Balancer.  
 Follow the instructions and configure the backend services and frontend as needed for your setup.
 
@@ -27,11 +28,11 @@ openssl req -new -newkey rsa:2048 -x509 -sha256 -days 7 -nodes -out cert.pem -ke
 ```
 If using the self-signed cert, you can skip the certificate chain requirement.
 
-#### Create a Cloud DNS zone
+### Create a Cloud DNS Zone
 In the console under Network Services > Cloud DNS [here](https://console.cloud.google.com/net-services/dns), create a new zone.  
 Follow the instructions and additionally setup your registar to point to Google Cloud DNS for this new zone.  There is a link in the top right of the console 'Registar Setup' that has the values you'll need.
 
-#### Grant cloudbuild IAM Role permissions
+### Grant `cloudbuild` IAM Role permissions
 In the console under IAM & Admin > IAM [here](https://console.cloud.google.com/iam-admin/iam), you should have a member for cloudbuild, something like `123456789@cloudbuild.gserviceaccount.com`.  
 The member account should already have the `Cloud Build Service Account` role.  
 Additionally, create a new custom role that has these permissions:  
@@ -58,7 +59,7 @@ Add your new custom role to the cloudbuild member.
 
 > Note: I think this is the minimal list, though there may be a few superfluous entries here.
 
-#### Setup a Cloud Build Trigger
+### Setup a Cloud Build Trigger
 In the console under Cloud Build > Build Triggers [here](https://console.cloud.google.com/cloud-build/triggers), create a new trigger.  
 Point the trigger to your fork of this repo.  
 > You might not need to fork, but it's recommended to be shielded from unwanted updates.  
@@ -79,3 +80,6 @@ The certificates will follow the naming pattern `zone-tld-certificate-serial` wh
 Certificates will never be deleted, just removed from the load-balancer.  You can see all certificates in the console [here](https://console.cloud.google.com/net-services/loadbalancing/advanced/sslCertificates/list).
 
 > NOTE: Remember to remove your temporary certificate from the https load-balancer.
+
+## TODO
+1. Setup a cron-style trigger so that certificates are checked for renewal each week(ish)
