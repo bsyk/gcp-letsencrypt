@@ -13,6 +13,7 @@ steps:
     "--agree-tos", "-m", "${_EMAIL}",
     "--non-interactive",
     "--dns-google",
+    "--dns-google-propagation-seconds", "90",
     "--test-cert",
     "--domain", "${_DOMAIN}",
     "--domain", "*.${_DOMAIN}"
