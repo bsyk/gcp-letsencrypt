@@ -1,8 +1,13 @@
 steps:
 - name: gcr.io/cloud-builders/gsutil
-  args: ['cp', 'gs://${_CACHE_BUCKET}/letsencrypt.tar.gz', 'letsencrypt.tar.gz'] 
-- name: 'certbot/dns-google'
-  entrypoint: './gcp-le-renew.sh'
+  entrypoint: "tar"
+  args: ["-zcf", "/workspace/letsencrypt.tar.gz", "--files-from=/dev/null"]
+- name: gcr.io/cloud-builders/gsutil
+  args: ["cp", "-n", "letsencrypt.tar.gz", "gs://${_CACHE_BUCKET}/letsencrypt.tar.gz"] 
+- name: gcr.io/cloud-builders/gsutil
+  args: ["cp", "gs://${_CACHE_BUCKET}/letsencrypt.tar.gz", "letsencrypt.tar.gz"] 
+- name: "certbot/dns-google"
+  entrypoint: "./gcp-le-renew.sh"
   args: [
     "certonly",
     "--agree-tos", "-m", "${_EMAIL}",
@@ -13,9 +18,9 @@ steps:
     "--domain", "*.${_DOMAIN}"
     ]
 - name: gcr.io/cloud-builders/gsutil
-  args: ['cp', 'letsencrypt.tar.gz', 'gs://${_CACHE_BUCKET}/letsencrypt.tar.gz'] 
-- name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: './gcp-ssl-update.sh'
+  args: ["cp", "letsencrypt.tar.gz", "gs://${_CACHE_BUCKET}/letsencrypt.tar.gz"] 
+- name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "./gcp-ssl-update.sh"
   args: [
     "${_DOMAIN}",
     "${_PROXY_NAME}"
