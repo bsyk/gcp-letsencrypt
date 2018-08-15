@@ -1,7 +1,7 @@
 steps:
 - name: gcr.io/cloud-builders/gsutil
   entrypoint: "tar"
-  args: ["-zcf", "/workspace/letsencrypt.tar.gz", "--files-from=/dev/null"]
+  args: ["-zcf", "letsencrypt.tar.gz", "--files-from=/dev/null"]
 - name: gcr.io/cloud-builders/gsutil
   args: ["cp", "-n", "letsencrypt.tar.gz", "gs://${_CACHE_BUCKET}/letsencrypt.tar.gz"] 
 - name: gcr.io/cloud-builders/gsutil
