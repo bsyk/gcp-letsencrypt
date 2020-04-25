@@ -15,7 +15,8 @@ You'll need a certificate pair in order to create the load-balancer. A self-sign
 1. Create a Cloud DNS Zone  
 This needs to be properly registered with your registar.
 1. Grant `cloudbuild` IAM Role permissions  
-As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissiosn to do so.  
+As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissions to do so.
+1. Grant CertBot permissions to modidfy DNS records  
 1. Setup a Cloud Build Trigger
 
 ### Create an HTTPS Load-balancer
@@ -39,6 +40,7 @@ To allow cloud build to modify the loadbalancer configuration, create the follow
 
 Role: LoadBalancer certificate updates
 ```
+compute.forwardingRules.list
 compute.globalOperations.get
 compute.sslCertificates.create
 compute.sslCertificates.get
@@ -47,8 +49,12 @@ compute.targetHttpsProxies.get
 compute.targetHttpsProxies.list
 compute.targetHttpsProxies.setSslCertificates
 ```
+You can do this in the console under IAM & Admin > Roles [here](https://console.cloud.google.com/iam-admin/roles)  
+Add your new custom role to the cloudbuild member.
 
+### Grant CertBot permissions to modify DNS records
 In order to (separately) allow CertBot to alter the zone files in the process of DNS validation, we'll need the following addional role.
+
 Role: CertBot DNS ownership validation
 ```
 dns.changes.create
@@ -60,15 +66,10 @@ dns.resourceRecordSets.list
 dns.resourceRecordSets.update
 ```
 While we should be able to just add the above role to the cloud build service account as well, a bug somewhere makes CertBot insensitve to such additions.
-Instead we'll need to provide CertBot with an service account key explicitly, thoudh a json file.
+Instead we'll need to provide CertBot with an service account key explicitly, though a json file.
 So, create a new service account, for example 'sa-certbot', and grant it the above role. Also generate a json key for it, this is what we'll use. 
 The easiest way to provide the build system access to the key (security alert) is to include the json file directly into the (cloned) repository.
 Note that this is a workaround, that may no longer be necessary in the near future, as the CertBot team could solve the 'insensitivity'.
-
-You can do this in the console under IAM & Admin > Roles [here](https://console.cloud.google.com/iam-admin/roles)  
-Add your new custom role to the cloudbuild member.
-
-> Note: I think this is the minimal list, though there may be a few superfluous entries here.
 
 ### Setup a Cloud Build Trigger
 In the console under Cloud Build > Build Triggers [here](https://console.cloud.google.com/cloud-build/triggers), create a new trigger.  
