@@ -10,6 +10,7 @@ steps:
   entrypoint: "./gcp-le-renew.sh"
   args: [
     "certonly",
+    "--dns-google-credentials", "${_SA_KEY_FILE}",
     "--agree-tos", "-m", "${_EMAIL}",
     "--non-interactive",
     "--dns-google",
@@ -23,5 +24,6 @@ steps:
   entrypoint: "./gcp-ssl-update.sh"
   args: [
     "${_DOMAIN}",
-    "${_PROXY_NAME}"
+    "${_FRONT_END_NAME_IPV4}",
+    "${_FRONT_END_NAME_IPV6}"
   ]

@@ -15,7 +15,8 @@ You'll need a certificate pair in order to create the load-balancer. A self-sign
 1. Create a Cloud DNS Zone  
 This needs to be properly registered with your registar.
 1. Grant `cloudbuild` IAM Role permissions  
-As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissiosn to do so.  
+As Cloud Build will be interacting with the load-balancer and Cloud DNS, the cloudbuild account needs permissions to do so.
+1. Grant CertBot permissions to modidfy DNS records  
 1. Setup a Cloud Build Trigger
 
 ### Create an HTTPS Load-balancer
@@ -35,29 +36,40 @@ Follow the instructions and additionally setup your registar to point to Google 
 ### Grant `cloudbuild` IAM Role permissions
 In the console under IAM & Admin > IAM [here](https://console.cloud.google.com/iam-admin/iam), you should have a member for cloudbuild, something like `123456789@cloudbuild.gserviceaccount.com`.  
 The member account should already have the `Cloud Build Service Account` role.  
-Additionally, create a new custom role that has these permissions:  
+To allow cloud build to modify the loadbalancer configuration, create the following custom role and add it to the cloud build service account.
+
+Role: LoadBalancer certificate updates
 ```
+compute.forwardingRules.list
+compute.globalOperations.get
 compute.sslCertificates.create
 compute.sslCertificates.get
 compute.sslCertificates.list
 compute.targetHttpsProxies.get
 compute.targetHttpsProxies.list
 compute.targetHttpsProxies.setSslCertificates
+```
+You can do this in the console under IAM & Admin > Roles [here](https://console.cloud.google.com/iam-admin/roles)  
+Add your new custom role to the cloudbuild member.
+
+### Grant CertBot permissions to modify DNS records
+In order to (separately) allow CertBot to alter the zone files in the process of DNS validation, we'll need the following addional role.
+
+Role: CertBot DNS ownership validation
+```
 dns.changes.create
 dns.changes.get
-dns.changes.list
-dns.managedZones.get
 dns.managedZones.list
-dns.projects.get
 dns.resourceRecordSets.create
 dns.resourceRecordSets.delete
 dns.resourceRecordSets.list
 dns.resourceRecordSets.update
 ```
-You can do this in the console under IAM & Admin > Roles [here](https://console.cloud.google.com/iam-admin/roles)  
-Add your new custom role to the cloudbuild member.
-
-> Note: I think this is the minimal list, though there may be a few superfluous entries here.
+While we should be able to just add the above role to the cloud build service account as well, a bug somewhere makes CertBot insensitve to such additions.
+Instead we'll need to provide CertBot with an service account key explicitly, though a json file.
+So, create a new service account, for example 'sa-certbot', and grant it the above role. Also generate a json key for it, this is what we'll use. 
+The easiest way to provide the build system access to the key (security alert) is to include the json file directly into the (cloned) repository.
+Note that this is a workaround, that may no longer be necessary in the near future, as the CertBot team could solve the 'insensitivity'.
 
 ### Setup a Cloud Build Trigger
 In the console under Cloud Build > Build Triggers [here](https://console.cloud.google.com/cloud-build/triggers), create a new trigger.  
@@ -73,7 +85,9 @@ Set the Build Configuration option to `cloudbuild.yaml` and add these additional
 | _CACHE_BUCKET | my-cert-bucket | The name of the Google Cloud Storage bucket to use for storing/retrieving the certificates between builds |
 | _EMAIL | me@example.com | The email that will be used when generating your letsencrypt certificates |
 | _DOMAIN | example.com | The plain domain name for which certificates will be generated.  The configured zone must match this.  The request will be for a certificate that's valid for example.com and *.example.com |
-| _PROXY_NAME | my-ssl-target-proxy | The name of the https proxy, by default this will be `[https-loadbalancer-name]-target-proxy` |
+| _FRONT_END_NAME_IPV4 | public-example-com-ipv4 | The name of the load balancer front-end for IP version 4, leave empty if not used |
+| _FRONT_END_NAME_IPV6 | public-example-com-ipv6 | The name of the load balancer front-end for IP version 6, leave empty if not used |
+| _SA_KEY_FILE | sa-certbot.json | Service account created to allow CertBot access to DNS zones, placed in this repostory |
 
 If all works well, you should have a new certificate on your load-balancer after having run the trigger for the first time.  
 The certificates will follow the naming pattern `zone-tld-certificate-serial` where any dots in the domain are replaced with dashes.  
