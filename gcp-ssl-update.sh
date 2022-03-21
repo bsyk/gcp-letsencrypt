@@ -9,7 +9,7 @@ DOMAIN=$1
 FRONT_END_NAME_IPV4=$2
 FRONT_END_NAME_IPV6=$3
 SERIAL=`openssl x509 -in ./live/$DOMAIN/cert.pem -serial -noout | awk -F= '{print tolower($2)}'`
-NAME=`echo $DOMAIN-$SERIAL | sed 's/\./-/g'`
+NAME=`echo $DOMAIN-$SERIAL | cut -b1-62 | sed 's/\./-/g'`
 
 # Join array by delimiter - see https://stackoverflow.com/a/17841619/2242975
 function join_by { local IFS="$1"; shift; echo "$*"; }
