@@ -18,8 +18,8 @@ if `gcloud compute ssl-certificates list | grep -q $SERIAL`; then
    echo 'Certificate with this serial number was already processed, skipping loadbalancer update'
 else
     echo 'In else'
-    echo 'Domain ${DOMAIN}'
-    echo 'Front_end ${FRONT_END_NAME_IPV4}'
+    echo "Domain $DOMAIN"
+    echo "Front_end $FRONT_END_NAME_IPV4"
     # Create a new ssl-certificate entry
     gcloud compute ssl-certificates create $NAME --certificate=./live/$DOMAIN/fullchain.pem --private-key=./live/$DOMAIN/privkey.pem
 
