@@ -14,7 +14,7 @@ NAME=`echo $DOMAIN-$SERIAL | cut -b1-62 | sed 's/\./-/g'`
 # Join array by delimiter - see https://stackoverflow.com/a/17841619/2242975
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
-if `gcloud compute ssl-certificates list | grep -q $SERIAL`; then
+if `gcloud compute ssl-certificates list | grep -q $NAME`; then
    echo 'Certificate with this serial number was already processed, skipping loadbalancer update'
 else
     echo 'In else'
