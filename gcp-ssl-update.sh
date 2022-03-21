@@ -17,9 +17,8 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 if `gcloud compute ssl-certificates list | grep -q $NAME`; then
    echo 'Certificate with this serial number was already processed, skipping loadbalancer update'
 else
-    echo 'In else'
     echo "Domain $DOMAIN"
-    echo "Front_end $FRONT_END_NAME_IPV4"
+    
     # Create a new ssl-certificate entry
     gcloud compute ssl-certificates create $NAME --certificate=./live/$DOMAIN/fullchain.pem --private-key=./live/$DOMAIN/privkey.pem
 
@@ -27,7 +26,7 @@ else
     NEW_CERT=`gcloud compute ssl-certificates list --filter="name~'^$DOMAIN.*'" --limit 1 --sort-by ~creationTimestamp --format="value(name)"`
 
     if [[ ! -z "$FRONT_END_NAME_IPV4" ]]; then
-        echo 'Updating IPV4 forwarding leg'
+        echo "Updating IPV4 forwarding leg: $FRONT_END_NAME_IPV4"
 
         PROXY_IPV4=`gcloud compute forwarding-rules list --filter="name~'$FRONT_END_NAME_IPV4'" --format="value(target.scope())"`
         if [[ -z "$PROXY_IPV4" ]]; then
@@ -48,7 +47,7 @@ else
     fi
 
     if [[ ! -z "$FRONT_END_NAME_IPV6" ]]; then
-       echo 'Updating IPV6 forwarding leg'
+       echo "Updating IPV4 forwarding leg: $FRONT_END_NAME_IPV6"
 
         PROXY_IPV6=`gcloud compute forwarding-rules list --filter="name~'$FRONT_END_NAME_IPV6'" --format="value(target.scope())"`
         if [[ -z "$PROXY_IPV6" ]]; then
